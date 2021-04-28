@@ -1,17 +1,39 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './index.css';
+
+import { ApolloProvider } from '@apollo/client/react';
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloLink,
+  HttpLink,
+} from '@apollo/client';
+
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import './index.css';
+
+const httpLink = new HttpLink({
+  uri: process.env.REACT_APP_STORE_URI,
+});
+
+const authMiddleware = new ApolloLink((operation, forward) => {
+  operation.setContext({
+    headers: {
+      'X-Shopify-Storefront-Access-Token': process.env.REACT_APP_STORE_TOKEN,
+    },
+  });
+
+  return forward(operation);
+});
+
+const client = new ApolloClient({
+  link: authMiddleware.concat(httpLink),
+  cache: new InMemoryCache(),
+});
 
 ReactDOM.render(
-  <React.StrictMode>
+  <ApolloProvider client={client}>
     <App />
-  </React.StrictMode>,
+  </ApolloProvider>,
   document.getElementById('root')
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
